@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eventora | Events</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">E</span>
+          <div>
+            <span class="brand-name">Eventora</span>
+            <small>Event management suite</small>
+          </div>
+        </div>
+        <nav class="main-nav" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Dashboard</a>
+          <a class="nav-link active" href="events.html">Events</a>
+          <a class="nav-link" href="attendees.html">Attendees</a>
+        </nav>
+        <div class="status-pill"><span class="status-dot"></span>Events hub</div>
+      </header>
+
+      <div class="content-shell">
+      <main class="main-grid single-column">
+        <section class="panel">
+          <div class="panel-title-row">
+            <h2>Add Event</h2>
+            <span class="mini-badge">Create</span>
+          </div>
+          <form id="event-form">
+            <div class="field-group">
+              <label for="event-name">Event Name</label>
+              <input id="event-name" name="name" type="text" placeholder="Annual Tech Summit" required />
+            </div>
+            <div class="field-group">
+              <label for="event-date">Date</label>
+              <input id="event-date" name="date" type="date" required />
+            </div>
+            <div class="field-group">
+              <label for="event-venue">Venue</label>
+              <input id="event-venue" name="venue" type="text" placeholder="Conference Hall" required />
+            </div>
+            <button type="submit" class="primary-btn">Add Event</button>
+          </form>
+        </section>
+      </main>
+
+      <section class="panel">
+        <div class="panel-title-row">
+          <h2>Events</h2>
+          <span class="mini-badge">Upcoming</span>
+        </div>
+        <div id="events-list" class="list-container"></div>
+      </section>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eventora | Attendees</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">E</span>
+          <div>
+            <span class="brand-name">Eventora</span>
+            <small>Event management suite</small>
+          </div>
+        </div>
+        <nav class="main-nav" aria-label="Main navigation">
+          <a class="nav-link" href="index.html">Dashboard</a>
+          <a class="nav-link" href="events.html">Events</a>
+          <a class="nav-link active" href="attendees.html">Attendees</a>
+        </nav>
+        <div class="status-pill"><span class="status-dot"></span>Attendee ops</div>
+      </header>
+
+      <div class="content-shell">
+      <main class="main-grid single-column">
+        <section class="panel">
+          <div class="panel-title-row">
+            <h2>Register Attendee</h2>
+            <span class="mini-badge alt">RSVP</span>
+          </div>
+          <form id="attendee-form">
+            <div class="field-group">
+              <label for="attendee-name">Name</label>
+              <input id="attendee-name" name="name" type="text" placeholder="Jane Doe" required />
+            </div>
+            <div class="field-group">
+              <label for="attendee-email">Email</label>
+              <input id="attendee-email" name="email" type="email" placeholder="jane@example.com" required />
+            </div>
+            <div class="field-group">
+              <label for="ticket-type">Ticket Type</label>
+              <select id="ticket-type" name="ticketType" required>
+                <option value="">Select ticket type</option>
+                <option value="VIP">VIP</option>
+                <option value="Standard">Standard</option>
+                <option value="Student">Student</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="event-select">Event</label>
+              <select id="event-select" name="eventId" required>
+                <option value="">Select an event</option>
+              </select>
+            </div>
+            <button type="submit" class="primary-btn">Register</button>
+          </form>
+        </section>
+      </main>
+
+      <section class="panel search-panel">
+        <div class="search-header">
+          <h2>Search Attendees</h2>
+          <input id="search-input" type="search" placeholder="Search by name, email, or event" />
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title-row">
+          <h2>Attendee Records</h2>
+          <span class="mini-badge alt">Records</span>
+        </div>
+        <div id="attendees-list" class="list-container"></div>
+      </section>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

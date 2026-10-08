@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eventora | Event & Attendee Management System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">E</span>
+          <div>
+            <span class="brand-name">Eventora</span>
+            <small>Event management suite</small>
+          </div>
+        </div>
+        <nav class="main-nav" aria-label="Main navigation">
+          <a class="nav-link active" href="index.html">Dashboard</a>
+          <a class="nav-link" href="events.html">Events</a>
+          <a class="nav-link" href="attendees.html">Attendees</a>
+        </nav>
+        <div class="status-pill"><span class="status-dot"></span>Live dashboard</div>
+      </header>
+
+      <section class="hero hero-home" id="home">
+        <div class="hero-copy">
+          <p class="eyebrow">Thoughtfully planned. Unforgettable by design.</p>
+          <h1>Make every moment <span>mean more.</span></h1>
+          <p class="lead">
+            From the first idea to the final toast, bring every detail together and create an experience your guests will remember.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-btn" href="#plan-event">Start planning <span aria-hidden="true">↗</span></a>
+            <a class="hero-link" href="#events">Explore your events <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-card">
+            <span id="stats-events">0</span>
+            <label>Events planned</label>
+          </div>
+          <div class="stat-card">
+            <span id="stats-attendees">0</span>
+            <label>Guests welcomed</label>
+          </div>
+          <div class="stat-card">
+            <span id="stats-search">Ready</span>
+            <label>Guest search</label>
+          </div>
+        </div>
+      </section>
+
+      <div class="content-shell">
+        <section class="section-intro">
+          <p class="eyebrow">A little less logistics. A lot more magic.</p>
+          <h2>Good events don’t just happen.<br /><span>They come together.</span></h2>
+          <p>Keep your events and guest list in one place, so you can spend less time coordinating and more time making it special.</p>
+        </section>
+
+        <main class="main-grid">
+        <section class="panel" id="plan-event">
+          <div class="panel-title-row">
+            <div>
+              <p class="panel-kicker">The first step</p>
+              <h2>Plan something wonderful</h2>
+            </div>
+            <span class="mini-badge">New event</span>
+          </div>
+          <form id="event-form">
+            <div class="field-group">
+              <label for="event-name">Event Name</label>
+              <input id="event-name" name="name" type="text" placeholder="Annual Tech Summit" required />
+            </div>
+            <div class="field-group">
+              <label for="event-date">Date</label>
+              <input id="event-date" name="date" type="date" required />
+            </div>
+            <div class="field-group">
+              <label for="event-venue">Venue</label>
+              <input id="event-venue" name="venue" type="text" placeholder="Conference Hall" required />
+            </div>
+            <button type="submit" class="primary-btn">Add Event</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title-row">
+            <div>
+              <p class="panel-kicker">Save them a seat</p>
+              <h2>Welcome your guests</h2>
+            </div>
+            <span class="mini-badge alt">Guest list</span>
+          </div>
+          <form id="attendee-form">
+            <div class="field-group">
+              <label for="attendee-name">Name</label>
+              <input id="attendee-name" name="name" type="text" placeholder="Jane Doe" required />
+            </div>
+            <div class="field-group">
+              <label for="attendee-email">Email</label>
+              <input id="attendee-email" name="email" type="email" placeholder="jane@example.com" required />
+            </div>
+            <div class="field-group">
+              <label for="ticket-type">Ticket Type</label>
+              <select id="ticket-type" name="ticketType" required>
+                <option value="">Select ticket type</option>
+                <option value="VIP">VIP</option>
+                <option value="Standard">Standard</option>
+                <option value="Student">Student</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="event-select">Event</label>
+              <select id="event-select" name="eventId" required>
+                <option value="">Select an event</option>
+              </select>
+            </div>
+            <button type="submit" class="primary-btn">Register</button>
+          </form>
+        </section>
+        </main>
+
+        <section class="panel search-panel">
+          <div class="search-header">
+            <div>
+              <p class="panel-kicker">Your people, at a glance</p>
+              <h2>Find a guest</h2>
+            </div>
+            <input id="search-input" type="search" placeholder="Search by name, email, or event" />
+          </div>
+        </section>
+
+        <section class="panel" id="events">
+          <div class="panel-title-row">
+            <div>
+              <p class="panel-kicker">On the calendar</p>
+              <h2>Events worth looking forward to</h2>
+            </div>
+            <span class="mini-badge">Upcoming</span>
+          </div>
+          <div id="events-list" class="list-container"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title-row">
+            <div>
+              <p class="panel-kicker">The names behind the memories</p>
+              <h2>Your guest list</h2>
+            </div>
+            <span class="mini-badge alt">Guest list</span>
+          </div>
+          <div id="attendees-list" class="list-container"></div>
+        </section>
+      </div>
+      <footer class="site-footer">
+        <a class="footer-brand" href="#home">Eventora<span>.</span></a>
+        <p>Here’s to gatherings that stay with you.</p>
+        <a href="#home">Back to top ↑</a>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
