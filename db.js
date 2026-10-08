@@ -59,6 +59,67 @@ db.serialize(() => {
       UNIQUE(event_id, email)
     )
   `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS venues (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      location TEXT NOT NULL,
+      capacity INTEGER NOT NULL CHECK (capacity > 0),
+      equipment TEXT NOT NULL DEFAULT '',
+      availability_status TEXT NOT NULL DEFAULT 'Available'
+        CHECK (availability_status IN ('Available', 'Unavailable'))
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      attendee_id INTEGER NOT NULL,
+      event_id INTEGER NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+      comments TEXT NOT NULL DEFAULT '',
+      satisfaction INTEGER NOT NULL CHECK (satisfaction BETWEEN 1 AND 5),
+      FOREIGN KEY (attendee_id) REFERENCES attendees(id) ON DELETE CASCADE,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      attendee_id INTEGER NOT NULL,
+      event_id INTEGER NOT NULL,
+      amount REAL NOT NULL CHECK (amount >= 0),
+      status TEXT NOT NULL CHECK (status IN ('Pending', 'Paid', 'Failed', 'Refunded')),
+      method TEXT NOT NULL CHECK (method IN ('Cash', 'Card', 'Bank transfer', 'Online')),
+      FOREIGN KEY (attendee_id) REFERENCES attendees(id) ON DELETE CASCADE,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS volunteers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      contact TEXT NOT NULL,
+      event_id INTEGER NOT NULL,
+      responsibility TEXT NOT NULL,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS certificates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      attendee_id INTEGER NOT NULL,
+      event_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      issue_date TEXT NOT NULL,
+      FOREIGN KEY (attendee_id) REFERENCES attendees(id) ON DELETE CASCADE,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+    )
+  `);
 });
 
 module.exports = { db, run, get, all };

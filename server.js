@@ -263,6 +263,331 @@ app.delete('/api/events/:id', async (req, res) => {
   }
 });
 
+function parsePositiveId(value) {
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+function parseRating(value) {
+  const rating = Number(value);
+  return Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : null;
+}
+
+async function validateAttendeeEvent(attendeeValue, eventValue) {
+  const attendeeId = parsePositiveId(attendeeValue);
+  const eventId = parsePositiveId(eventValue);
+
+  if (!attendeeId || !eventId) {
+    return { error: 'Select a valid attendee and event.' };
+  }
+
+  const attendee = await get(
+    'SELECT id FROM attendees WHERE id = ? AND event_id = ?',
+    [attendeeId, eventId]
+  );
+
+  if (!attendee) {
+    return { error: 'The selected attendee is not registered for this event.' };
+  }
+
+  return { attendeeId, eventId };
+}
+
+const featureResources = {
+  venues: {
+    table: 'venues',
+    select: `
+      SELECT id, name, location, capacity, equipment,
+             availability_status AS availabilityStatus
+      FROM venues
+      ORDER BY name ASC
+    `,
+    selectOne: `
+      SELECT id, name, location, capacity, equipment,
+             availability_status AS availabilityStatus
+      FROM venues WHERE id = ?
+    `,
+    insert: `
+      INSERT INTO venues (name, location, capacity, equipment, availability_status)
+      VALUES (?, ?, ?, ?, ?)
+    `,
+    update: `
+      UPDATE venues
+      SET name = ?, location = ?, capacity = ?, equipment = ?, availability_status = ?
+      WHERE id = ?
+    `,
+    validate: async (body) => {
+      const capacity = Number(body.capacity);
+      const availabilityStatus = body.availabilityStatus;
+      if (!isValidText(body.name) || !isValidText(body.location)) {
+        return { error: 'Venue name and location are required.' };
+      }
+      if (!Number.isSafeInteger(capacity) || capacity < 1) {
+        return { error: 'Venue capacity must be a positive whole number.' };
+      }
+      if (!['Available', 'Unavailable'].includes(availabilityStatus)) {
+        return { error: 'Select a valid venue availability status.' };
+      }
+      if (body.equipment != null && typeof body.equipment !== 'string') {
+        return { error: 'Available equipment must be text.' };
+      }
+      return {
+        params: [
+          body.name.trim(),
+          body.location.trim(),
+          capacity,
+          String(body.equipment || '').trim(),
+          availabilityStatus,
+        ],
+      };
+    },
+  },
+  feedback: {
+    table: 'feedback',
+    select: `
+      SELECT f.id, f.attendee_id AS attendeeId, f.event_id AS eventId,
+             f.rating, f.comments, f.satisfaction,
+             a.name AS attendeeName, e.name AS eventName
+      FROM feedback f
+      INNER JOIN attendees a ON a.id = f.attendee_id
+      INNER JOIN events e ON e.id = f.event_id
+      ORDER BY f.id DESC
+    `,
+    selectOne: `
+      SELECT f.id, f.attendee_id AS attendeeId, f.event_id AS eventId,
+             f.rating, f.comments, f.satisfaction,
+             a.name AS attendeeName, e.name AS eventName
+      FROM feedback f
+      INNER JOIN attendees a ON a.id = f.attendee_id
+      INNER JOIN events e ON e.id = f.event_id
+      WHERE f.id = ?
+    `,
+    insert: `
+      INSERT INTO feedback (attendee_id, event_id, rating, comments, satisfaction)
+      VALUES (?, ?, ?, ?, ?)
+    `,
+    update: `
+      UPDATE feedback
+      SET attendee_id = ?, event_id = ?, rating = ?, comments = ?, satisfaction = ?
+      WHERE id = ?
+    `,
+    validate: async (body) => {
+      const relation = await validateAttendeeEvent(body.attendeeId, body.eventId);
+      if (relation.error) return relation;
+      const rating = parseRating(body.rating);
+      const satisfaction = parseRating(body.satisfaction);
+      if (!rating || !satisfaction) {
+        return { error: 'Rating and overall satisfaction must each be between 1 and 5.' };
+      }
+      if (body.comments != null && typeof body.comments !== 'string') {
+        return { error: 'Feedback comments must be text.' };
+      }
+      return {
+        params: [
+          relation.attendeeId,
+          relation.eventId,
+          rating,
+          String(body.comments || '').trim(),
+          satisfaction,
+        ],
+      };
+    },
+  },
+  payments: {
+    table: 'payments',
+    select: `
+      SELECT p.id, p.attendee_id AS attendeeId, p.event_id AS eventId,
+             p.amount, p.status, p.method,
+             a.name AS attendeeName, e.name AS eventName
+      FROM payments p
+      INNER JOIN attendees a ON a.id = p.attendee_id
+      INNER JOIN events e ON e.id = p.event_id
+      ORDER BY p.id DESC
+    `,
+    selectOne: `
+      SELECT p.id, p.attendee_id AS attendeeId, p.event_id AS eventId,
+             p.amount, p.status, p.method,
+             a.name AS attendeeName, e.name AS eventName
+      FROM payments p
+      INNER JOIN attendees a ON a.id = p.attendee_id
+      INNER JOIN events e ON e.id = p.event_id
+      WHERE p.id = ?
+    `,
+    insert: `
+      INSERT INTO payments (attendee_id, event_id, amount, status, method)
+      VALUES (?, ?, ?, ?, ?)
+    `,
+    update: `
+      UPDATE payments
+      SET attendee_id = ?, event_id = ?, amount = ?, status = ?, method = ?
+      WHERE id = ?
+    `,
+    validate: async (body) => {
+      const relation = await validateAttendeeEvent(body.attendeeId, body.eventId);
+      if (relation.error) return relation;
+      const amount = Number(body.amount);
+      const statuses = ['Pending', 'Paid', 'Failed', 'Refunded'];
+      const methods = ['Cash', 'Card', 'Bank transfer', 'Online'];
+      if (!Number.isFinite(amount) || amount < 0) {
+        return { error: 'Payment amount must be a non-negative number.' };
+      }
+      if (!statuses.includes(body.status) || !methods.includes(body.method)) {
+        return { error: 'Select a valid payment status and method.' };
+      }
+      return {
+        params: [relation.attendeeId, relation.eventId, amount, body.status, body.method],
+      };
+    },
+  },
+  volunteers: {
+    table: 'volunteers',
+    select: `
+      SELECT v.id, v.name, v.contact, v.event_id AS eventId,
+             v.responsibility, e.name AS eventName
+      FROM volunteers v
+      INNER JOIN events e ON e.id = v.event_id
+      ORDER BY v.name ASC
+    `,
+    selectOne: `
+      SELECT v.id, v.name, v.contact, v.event_id AS eventId,
+             v.responsibility, e.name AS eventName
+      FROM volunteers v
+      INNER JOIN events e ON e.id = v.event_id
+      WHERE v.id = ?
+    `,
+    insert: `
+      INSERT INTO volunteers (name, contact, event_id, responsibility)
+      VALUES (?, ?, ?, ?)
+    `,
+    update: `
+      UPDATE volunteers
+      SET name = ?, contact = ?, event_id = ?, responsibility = ?
+      WHERE id = ?
+    `,
+    validate: async (body) => {
+      const eventId = parsePositiveId(body.eventId);
+      if (!isValidText(body.name) || !isValidText(body.contact) || !isValidText(body.responsibility)) {
+        return { error: 'Volunteer name, contact, and assigned responsibility are required.' };
+      }
+      if (!eventId || !(await get('SELECT id FROM events WHERE id = ?', [eventId]))) {
+        return { error: 'Select a valid event for this volunteer.' };
+      }
+      return {
+        params: [body.name.trim(), body.contact.trim(), eventId, body.responsibility.trim()],
+      };
+    },
+  },
+  certificates: {
+    table: 'certificates',
+    select: `
+      SELECT c.id, c.attendee_id AS attendeeId, c.event_id AS eventId,
+             c.type, c.issue_date AS issueDate,
+             a.name AS attendeeName, e.name AS eventName
+      FROM certificates c
+      INNER JOIN attendees a ON a.id = c.attendee_id
+      INNER JOIN events e ON e.id = c.event_id
+      ORDER BY c.issue_date DESC, c.id DESC
+    `,
+    selectOne: `
+      SELECT c.id, c.attendee_id AS attendeeId, c.event_id AS eventId,
+             c.type, c.issue_date AS issueDate,
+             a.name AS attendeeName, e.name AS eventName
+      FROM certificates c
+      INNER JOIN attendees a ON a.id = c.attendee_id
+      INNER JOIN events e ON e.id = c.event_id
+      WHERE c.id = ?
+    `,
+    insert: `
+      INSERT INTO certificates (attendee_id, event_id, type, issue_date)
+      VALUES (?, ?, ?, ?)
+    `,
+    update: `
+      UPDATE certificates
+      SET attendee_id = ?, event_id = ?, type = ?, issue_date = ?
+      WHERE id = ?
+    `,
+    validate: async (body) => {
+      const relation = await validateAttendeeEvent(body.attendeeId, body.eventId);
+      if (relation.error) return relation;
+      const issueDate = body.issueDate;
+      const parsedDate = typeof issueDate === 'string' ? new Date(`${issueDate}T00:00:00Z`) : null;
+      if (!isValidText(body.type)) {
+        return { error: 'Certificate type is required.' };
+      }
+      if (
+        !issueDate ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(issueDate) ||
+        Number.isNaN(parsedDate.getTime()) ||
+        parsedDate.toISOString().slice(0, 10) !== issueDate
+      ) {
+        return { error: 'Enter a valid certificate issue date.' };
+      }
+      return {
+        params: [relation.attendeeId, relation.eventId, body.type.trim(), issueDate],
+      };
+    },
+  },
+};
+
+Object.entries(featureResources).forEach(([resource, config]) => {
+  const endpoint = `/api/${resource}`;
+
+  app.get(endpoint, async (req, res) => {
+    try {
+      res.json(await all(config.select));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: `Unable to fetch ${resource}.` });
+    }
+  });
+
+  app.post(endpoint, async (req, res) => {
+    try {
+      const result = await config.validate(req.body);
+      if (result.error) return res.status(400).json({ error: result.error });
+      const created = await run(config.insert, result.params);
+      res.status(201).json(await get(config.selectOne, [created.id]));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: `Unable to create ${resource.slice(0, -1)}.` });
+    }
+  });
+
+  app.put(`${endpoint}/:id`, async (req, res) => {
+    const id = parsePositiveId(req.params.id);
+    if (!id) return res.status(400).json({ error: `A valid ${resource.slice(0, -1)} ID is required.` });
+
+    try {
+      const existing = await get(`SELECT id FROM ${config.table} WHERE id = ?`, [id]);
+      if (!existing) return res.status(404).json({ error: `${resource.slice(0, -1)} not found.` });
+
+      const result = await config.validate(req.body);
+      if (result.error) return res.status(400).json({ error: result.error });
+      await run(config.update, [...result.params, id]);
+      res.json(await get(config.selectOne, [id]));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: `Unable to update ${resource.slice(0, -1)}.` });
+    }
+  });
+
+  app.delete(`${endpoint}/:id`, async (req, res) => {
+    const id = parsePositiveId(req.params.id);
+    if (!id) return res.status(400).json({ error: `A valid ${resource.slice(0, -1)} ID is required.` });
+
+    try {
+      const result = await run(`DELETE FROM ${config.table} WHERE id = ?`, [id]);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: `${resource.slice(0, -1)} not found.` });
+      }
+      res.json({ message: `${resource.slice(0, -1)} deleted successfully.` });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: `Unable to delete ${resource.slice(0, -1)}.` });
+    }
+  });
+});
+
 app.get('/api/events/:id/attendees/export', async (req, res) => {
   const id = parseInt(req.params.id, 10);
 
