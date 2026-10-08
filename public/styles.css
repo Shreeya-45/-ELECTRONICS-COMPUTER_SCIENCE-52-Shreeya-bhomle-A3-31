@@ -23,7 +23,13 @@ html {
 body {
   margin: 0;
   color: var(--ink);
-  background: var(--paper);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(rgba(250, 249, 245, 0.82), rgba(250, 249, 245, 0.82)),
+    url("eventmanage.jpg");
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -399,7 +405,7 @@ select {
   margin: 0 0 22px;
   padding: 30px;
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow);
 }
 
